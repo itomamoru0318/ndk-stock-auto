@@ -1,0 +1,36 @@
+
+name: Daily NDK Stock Update
+
+on:
+  schedule:
+    # JST 16:00 = UTC 07:00
+    - cron: '0 7 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  fetch-stock:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas requests
+
+      - name: Run stock fetch script
+        run: python fetch_stock.py
+
+      - name: Commit CSV
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add ndk_stock.csv
+          git commit -m "Update stock CSV" || echo "No changes to commit"
+          git push
