@@ -3,49 +3,36 @@ import csv
 import os
 import smtplib
 from email.mime.text import MIMEText
-from email.utils import formatdate
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 
-# ===== 設定 =====
 CSV_FILE = "ndk_stock.csv"
 
-# GitHub Secrets から環境変数として取得
 MAIL_FROM = os.environ["MAIL_FROM"]
 MAIL_PASSWORD = os.environ["MAIL_PASSWORD"]
 MAIL_TO = os.environ["MAIL_TO"]
 
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 465
-
-# ===== CSVから最新行を取得 =====
-with open(CSV_FILE, newline="", encoding="utf-8") as f:
-    rows = list(csv.DictReader(f))
-    if not rows:
-        raise RuntimeError("CSVにデータがありません")
-    latest = rows[-1]
-
-# ===== メール本文作成 =====
-body = f"""
-{latest['Date']} 時点のNDK株価情報です。
-
-【株価】
-Open  : {latest['Open']}
-High  : {latest['High']}
-Low   : {latest['Low']}
-Close : {latest['Close']}
-
-【出来高】
-{latest['Volume']} 株
-"""
-
-msg = MIMEText(body, _charset="utf-8")
-msg["Subject"] = "【自動配信】NDK 株価情報"
+msg = MIMEMultipart()
+msg["Subject"] = "NDK_STOCK_CSV_AUTO"
 msg["From"] = MAIL_FROM
 msg["To"] = MAIL_TO
-msg["Date"] = formatdate(localtime=True)
 
-# ===== メール送信 =====
-with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as smtp:
+# 本文
+msg.attach(MIMEText("本日のNDK株価CSVを添付します。", "plain", "utf-8"))
+
+# CSV添付
+with open(CSV_FILE, "rb") as f:
+    part = MIMEBase("application", "octet-stream")
+    part.set_payload(f.read())
+
+encoders.encode_base64(part)
+part.add_header(
+    "Content-Disposition",
+    f"attachment; filename={CSV_FILE}"
+)
+msg.attach(part)
+
+with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
     smtp.login(MAIL_FROM, MAIL_PASSWORD)
     smtp.send_message(msg)
-
-print("Mail sent successfully")
