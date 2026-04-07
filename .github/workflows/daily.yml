@@ -1,10 +1,9 @@
-
-name: Daily NDK Stock Update
+name: Daily NDK Stock Auto
 
 on:
   schedule:
-    # JST 16:00 = UTC 07:00
-    - cron: '0 7 * * 1-5'
+    # JST 08:30 = UTC 23:30
+    - cron: '30 23 * * 1-5'
   workflow_dispatch:
 
 # ✅ これを追加（超重要）
