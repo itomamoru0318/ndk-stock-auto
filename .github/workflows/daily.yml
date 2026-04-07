@@ -18,14 +18,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # 履歴をすべて取得（重要）
+          fetch-depth: 0   # ★重要：履歴をすべて取得
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # ★ ここで先に最新の main を取り込む
       - name: Sync with remote
         run: |
           git config --global user.name "github-actions"
@@ -44,3 +43,6 @@ jobs:
           git add ndk_stock.csv
           git commit -m "Update stock CSV" || echo "No changes to commit"
           git push
+
+      - name: Send mail
+        run: python send_mail.py
